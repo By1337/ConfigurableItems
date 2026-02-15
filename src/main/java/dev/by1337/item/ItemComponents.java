@@ -16,11 +16,10 @@ import dev.by1337.yaml.codec.YamlCodec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.kyori.adventure.text.ComponentLike;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.block.Container;
-import org.bukkit.block.data.Lightable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -109,8 +108,8 @@ public class ItemComponents {
                 })
         ;
     }
-
-    public static ComponentsHolder fromItemStack(ItemStack itemStack) {
+    @ApiStatus.Internal // может быть перенести?
+    static ComponentsHolder fromItemStack(ItemStack itemStack) {
         ItemMeta im = itemStack.getItemMeta();
         if (im == null) return new ComponentsHolder();
         ComponentsHolder result = new ComponentsHolder();
@@ -133,7 +132,8 @@ public class ItemComponents {
             result.set(ItemComponents.ATTRIBUTES, new AttributesComponent(modifiers));
         }
         //todo skulls
-        result.set(ItemComponents.MATERIAL, new MaterialComponent(itemStack.getType().name()));
+        String material = itemStack.getType().getKey().asString();
+        result.set(ItemComponents.MATERIAL, new MaterialComponent(material));
         if (ServerVersion.is1_21_4orNewer()) {
             //noinspection all
             var v = im.getCustomModelDataComponent();
@@ -213,7 +213,7 @@ public class ItemComponents {
                 if (im.isGlider()) {
                     result.set(ItemComponents.GLIDER, true);
                 }
-                if (im.hasTooltipStyle()){
+                if (im.hasTooltipStyle()) {
                     result.set(ItemComponents.TOOLTIP_STYLE, im.getTooltipStyle());
                 }
 

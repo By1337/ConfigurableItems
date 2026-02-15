@@ -13,16 +13,17 @@ import org.jetbrains.annotations.Nullable;
 public class ItemModel {
     public static final YamlCodec<ItemModel> CODEC;
     public static final ItemModel AIR;
+
     private final ComponentsHolder components;
     private boolean dirty = false;
     private ItemStack cached;
 
-    public static ItemModel fromItemStack(ItemStack itemStack) {
-        return new ItemModel(ItemComponents.fromItemStack(itemStack));
-    }
-
     public ItemModel(ComponentsHolder components) {
         this.components = components;
+    }
+
+    public static ItemModel fromItemStack(ItemStack itemStack) {
+        return new ItemModel(ItemComponents.fromItemStack(itemStack));
     }
 
     public static ItemModel ofMaterial(String material) {
@@ -32,15 +33,35 @@ public class ItemModel {
         return result;
     }
 
+    @Contract(pure = true, value = "_ -> new")
     public ItemModel and(ItemModel i) {
         return new ItemModel(components.merge(i.components));
     }
 
+    @Contract(pure = true, value = " -> new")
+    public ItemModel copy() {
+        return new ItemModel(components.copy());
+    }
+
+    @Contract(pure = true)
+    public ComponentsHolder components() {
+        return components.copy();
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public ItemModel setDefaults(ItemModel def) {
+        var c = components.copy();
+        c.setDefaults(def.components);
+        return new ItemModel(c);
+    }
+
+    @Contract(pure = true)
     public boolean getBool(@Nullable BaseComponent<Boolean> type) {
         return components.getBool(type);
     }
 
     @Nullable
+    @Contract(pure = true)
     public <T> T get(@Nullable BaseComponent<T> type) {
         return components.get(type);
     }
@@ -51,10 +72,22 @@ public class ItemModel {
         return components.get(type, def);
     }
 
+
+    public ItemStack build() {
+        return build(s -> s);
+    }
+
+    public ItemStack build(PlaceholderApplier placeholders) {
+        return ItemStackBuilder.build(this, placeholders);
+    }
+
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
     public boolean dirty() {
         return dirty;
     }
 
+    @ApiStatus.Experimental
     @ApiStatus.Internal
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
@@ -66,14 +99,6 @@ public class ItemModel {
 
     void setCached(ItemStack cached) {
         this.cached = cached;
-    }
-
-    public ItemStack build() {
-        return build(s -> s);
-    }
-
-    public ItemStack build(PlaceholderApplier placeholders) {
-        return ItemStackBuilder.build(this, placeholders);
     }
 
     static {

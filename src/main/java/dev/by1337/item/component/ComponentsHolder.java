@@ -25,6 +25,7 @@ public class ComponentsHolder {
     @Nullable
     public <T> T get(@Nullable BaseComponent<T> type) {
         if (type == null) return null;
+        //noinspection unchecked
         return (T) components[type.id()];
     }
 
@@ -33,6 +34,7 @@ public class ComponentsHolder {
     public <T> T get(@Nullable BaseComponent<T> type, T def) {
         if (type == null) return def;
         var o = components[type.id()];
+        //noinspection unchecked
         return o == null ? def : (T) o;
     }
 
@@ -41,10 +43,20 @@ public class ComponentsHolder {
         components[type.id()] = value;
     }
 
+    public void setDefaults(ComponentsHolder def) {
+        for (int i = 0; i < components.length; i++) {
+            if (components[i] == null) {
+                components[i] = def.components[i];
+            }
+        }
+    }
+
+    @Contract(pure = true, value = " -> new")
     public ComponentsHolder copy() {
         return new ComponentsHolder(Arrays.copyOf(components, INIT_SIZE));
     }
 
+    @Contract(pure = true, value = "_ -> new")
     public ComponentsHolder merge(ComponentsHolder other) {
         Object[] result = Arrays.copyOf(components, INIT_SIZE);
         for (int i = 0; i < other.components.length; i++) {
@@ -54,6 +66,7 @@ public class ComponentsHolder {
                 if (current == null) {
                     result[i] = o;
                 } else if (o instanceof MergeableComponent<?>) {
+                    //noinspection rawtypes, unchecked
                     result[i] = merge((MergeableComponent) current, (MergeableComponent) o);
                 }
             }

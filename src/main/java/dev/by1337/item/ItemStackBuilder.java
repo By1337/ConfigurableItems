@@ -69,6 +69,7 @@ public class ItemStackBuilder {
         }
         var basePotion = model.get(ItemComponents.BASE_POTION);
         if (basePotion != null && im instanceof PotionMeta pm) {
+            //todo Arrow
             basePotion.apply(pm);
         }
 
