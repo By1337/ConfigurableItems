@@ -203,8 +203,8 @@ public class ItemComponents {
             if (im.isHideTooltip()) {
                 result.set(ItemComponents.HIDE_TOOLTIP, true);
             }
-            if (im.getEnchantmentGlintOverride()) {
-                result.set(ItemComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+            if (im.hasEnchantmentGlintOverride()) {
+                result.set(ItemComponents.ENCHANTMENT_GLINT_OVERRIDE, im.getEnchantmentGlintOverride());
             }
             if (im.hasMaxStackSize()) {
                 result.set(ItemComponents.MAX_STACK_SIZE, im.getMaxStackSize());
