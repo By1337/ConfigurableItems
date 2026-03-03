@@ -8,12 +8,14 @@ import dev.by1337.item.component.impl.ContainerComponent;
 import dev.by1337.item.component.impl.MaterialComponent;
 import dev.by1337.item.util.IntHolder;
 import dev.by1337.plc.PlaceholderApplier;
+import dev.by1337.yaml.BukkitCodecs;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.BlockState;
@@ -24,11 +26,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.PotionEffect;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ItemStackBuilder {
+    private static final UUID ATTRIBUTE_KEY = UUID.nameUUIDFromBytes("ConfigurableItems".getBytes(StandardCharsets.UTF_8));
+    private static final Set<Material> ITEMS_WHICH_ATTRIBUTES;
+
     public static ItemStack build(ItemModel model, PlaceholderApplier placeholders) {
         var cache = model.cached();
         if (cache != null && !model.dirty()) {
@@ -41,7 +46,7 @@ public class ItemStackBuilder {
             return result;
         }
         var attributes = model.get(ItemComponents.ATTRIBUTES);
-        if (attributes != null){
+        if (attributes != null) {
             for (AttributesComponent.Entry entry : attributes.modifiers()) {
                 im.addAttributeModifier(entry.attribute(), entry.modifier());
             }
@@ -50,9 +55,15 @@ public class ItemStackBuilder {
         var hide = model.get(ItemComponents.HIDE_FLAGS);
         if (hide != null) {
             hide.flags().forEach(im::addItemFlags);
-            if (attributes == null && ServerVersion.is1_20_5orNewer() && im.hasItemFlag(ItemFlag.HIDE_ATTRIBUTES)) {
-                // https://github.com/PaperMC/Paper/issues/10655
-                im.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier("123", 1, AttributeModifier.Operation.ADD_NUMBER));
+            // https://github.com/PaperMC/Paper/issues/10655
+            if (attributes == null &&
+                    ITEMS_WHICH_ATTRIBUTES.contains(result.getType()) &&
+                    ServerVersion.is1_20_5orNewer() &&
+                    im.hasItemFlag(ItemFlag.HIDE_ATTRIBUTES)
+            ) {
+                im.addAttributeModifier(Attribute.GENERIC_ARMOR,
+                        new AttributeModifier(ATTRIBUTE_KEY, "123", 1, AttributeModifier.Operation.ADD_NUMBER)
+                );
             }
         }
         var potion = model.get(ItemComponents.POTION_CONTENTS);
@@ -140,11 +151,11 @@ public class ItemStackBuilder {
         }
 
         if (ServerVersion.is1_21_3orNewer()) {
-            if (model.getBool(ItemComponents.GLIDER)){
+            if (model.getBool(ItemComponents.GLIDER)) {
                 im.setGlider(true);
             }
             var tooltip_style = model.get(ItemComponents.TOOLTIP_STYLE);
-            if (tooltip_style != null){
+            if (tooltip_style != null) {
                 im.setTooltipStyle(tooltip_style);
             }
         }
@@ -228,5 +239,22 @@ public class ItemStackBuilder {
             return c1.asComponent(placeholders).decoration(TextDecoration.ITALIC, false);
         }
         return c.asComponent().decoration(TextDecoration.ITALIC, false);
+    }
+
+    static {
+        ITEMS_WHICH_ATTRIBUTES = BukkitCodecs.material().wildcard().decode(List.of(
+                "*_axe",
+                "*_hoe",
+                "*_hoe",
+                "*_pickaxe",
+                "*_sword",
+                "*_helmet",
+                "*_chestplate",
+                "*_leggings",
+                "trident",
+                "*_spear",
+                "mace",
+                "*_armor"
+        )).mapValue(EnumSet::copyOf).getOrThrow();
     }
 }
