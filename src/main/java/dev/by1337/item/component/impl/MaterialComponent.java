@@ -26,23 +26,23 @@ public class MaterialComponent {
     private static final Logger log = LoggerFactory.getLogger("CfgItems");
     private final String input;
     private @Nullable ItemStack cashed;
-    private final boolean mutable;
+    private final boolean hasNoPlaceholders;
 
     public MaterialComponent(String input) {
         this.input = input;
-        mutable = hasNoPlaceholders(input);
+        hasNoPlaceholders = hasNoPlaceholders(input);
     }
 
     public ItemStack create(PlaceholderApplier placeholders) {
         if (cashed != null) return cashed.clone();
         ItemStack result = Builder.build(placeholders.setPlaceholders(input));
-        if (!mutable) {
+        if (hasNoPlaceholders) {
             cashed = result.clone();
         }
         return result;
     }
     public boolean isFinal(){
-        return !mutable;
+        return hasNoPlaceholders;
     }
 
     private static boolean hasNoPlaceholders(String input) {

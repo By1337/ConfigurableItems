@@ -191,7 +191,9 @@ public class ItemStackBuilder {
 
         result.setItemMeta(im);
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
-        model.setCached(result.clone());
+        if (material.isFinal()){
+            model.setCached(result.clone());
+        }
         model.setDirty(false);
         return result;
     }
@@ -244,7 +246,7 @@ public class ItemStackBuilder {
     static {
         ITEMS_WHICH_ATTRIBUTES = BukkitCodecs.material().wildcard().decode(List.of(
                 "*_axe",
-                "*_hoe",
+                "*_shovel",
                 "*_hoe",
                 "*_pickaxe",
                 "*_sword",
