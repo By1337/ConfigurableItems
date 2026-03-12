@@ -4,6 +4,7 @@ import dev.by1337.yaml.YamlMap;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
 import dev.by1337.yaml.codec.YamlCodec;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,13 +24,28 @@ public class YamlUpdater {
         rename(map, "display_name", "name");
         rename(map, "potion_effects", "potion_contents");
 
-        if (Objects.equals(map.getRaw("all_flags"), true)) {
-            rename(map, "item_flags", "$item_flags");
+        if (map.get("all_flags").asBool(false)) {
+            rename(map, "item_flags", "$all_flags$item_flags");
             map.set("$all_flags", "apply");
             map.set("item_flags", ALL_ITEM_FLAGS);
         }
         update(map, "enchantments", YamlUpdater::enchantmentsUpdater);
         update(map, "potion_contents", v -> PotionContentsUpdater.update(map, v));
+        if (map.get("enchanted").asBool(false)) {
+            map.set("$enchanted", "apply");
+            var list = map.get("item_flags").decode(YamlCodec.STRINGS).orDefault(List.of());
+            rename(map, "item_flags", "$enchanted$item_flags");
+            List<String> result = new ArrayList<>(list);
+            result.add(ItemFlag.HIDE_ENCHANTS.name().toLowerCase());
+            map.set("item_flags", result);
+
+            if (!map.has("enchantments")){
+                YamlMap enchantments = new YamlMap();
+                enchantments.set("vanishing_curse", 1);
+                map.set("enchantments", enchantments);
+            }
+        }
+
     }
 
     private static void update(YamlMap map, String who, Function<YamlValue, Object> updater) {

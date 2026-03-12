@@ -4,6 +4,7 @@ item: &self
   name: name
   amount: 10
   damage: 20
+  enchanted: true
   material: stone # or basehead-<value> or player-<name/uuid>
   # noinspection all
   model_data: 10
