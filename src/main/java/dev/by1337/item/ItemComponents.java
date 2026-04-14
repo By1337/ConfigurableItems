@@ -108,6 +108,7 @@ public class ItemComponents {
                 })
         ;
     }
+
     @ApiStatus.Internal // может быть перенести?
     static ComponentsHolder fromItemStack(ItemStack itemStack) {
         ItemMeta im = itemStack.getItemMeta();
@@ -163,7 +164,9 @@ public class ItemComponents {
             if (potionMeta.hasColor()) {
                 result.set(ItemComponents.COLOR, ColorHolder.fromBukkit(potionMeta.getColor()));
             }
-            result.set(ItemComponents.BASE_POTION, BasePotionComponent.fromMeta(potionMeta));
+            var v = BasePotionComponent.fromMeta(potionMeta);
+            if (v != null)
+                result.set(ItemComponents.BASE_POTION, v);
         }
         if (im instanceof LeatherArmorMeta m) {
             result.set(ItemComponents.COLOR, ColorHolder.fromBukkit(m.getColor()));

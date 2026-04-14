@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,11 +59,16 @@ public class BasePotionComponent {
         }
     }
 
-    public static BasePotionComponent fromMeta(PotionMeta im) {
+    @SuppressWarnings("ConstantConditions")
+    public static @Nullable BasePotionComponent fromMeta(PotionMeta im) {
         if (ServerVersion.is1_20_2orNewer()) {
-            return new BasePotionComponent(im.getBasePotionType());
+            var v = im.getBasePotionType();
+            if (v == null) return null;
+            return new BasePotionComponent(v);
         } else {
-            return new BasePotionComponent(im.getBasePotionData());
+            var v = im.getBasePotionData();
+            if (v == null) return null;
+            return new BasePotionComponent(v);
         }
     }
 
