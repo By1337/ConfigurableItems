@@ -3,12 +3,15 @@ package dev.by1337.item;
 import dev.by1337.item.component.BaseComponent;
 import dev.by1337.item.component.ComponentsHolder;
 import dev.by1337.item.component.impl.MaterialComponent;
+import dev.by1337.item.util.IntHolder;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.codec.YamlCodec;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class ItemModel {
     public static final YamlCodec<ItemModel> CODEC;
@@ -31,6 +34,28 @@ public class ItemModel {
         var result = new ItemModel(new ComponentsHolder());
         result.components.set(ItemComponents.MATERIAL, new MaterialComponent(material));
         return result;
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public ItemModel withAmount(int amount) {
+        return withAmount(Integer.toString(amount));
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public ItemModel withAmount(String amount) {
+        return with(c -> c.set(ItemComponents.AMOUNT, new IntHolder(amount)));
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public ItemModel withMaterial(String material) {
+        return with(c -> c.set(ItemComponents.MATERIAL, new MaterialComponent(material)));
+    }
+
+    @Contract(pure = true, value = "_ -> new")
+    public ItemModel with(Consumer<ComponentsHolder> consumer) {
+        var c = components.copy();
+        consumer.accept(c);
+        return new ItemModel(c);
     }
 
     @Contract(pure = true, value = "_ -> new")
