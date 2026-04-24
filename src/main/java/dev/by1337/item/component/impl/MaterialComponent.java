@@ -2,6 +2,8 @@ package dev.by1337.item.component.impl;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
+import dev.by1337.item.ItemModel;
+import dev.by1337.item.registry.GlobalItemRegistry;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.BukkitCodecs;
 import dev.by1337.yaml.YamlValue;
@@ -27,6 +29,8 @@ public class MaterialComponent {
     private final String input;
     private @Nullable ItemStack cashed;
     private final boolean hasNoPlaceholders;
+    private @Nullable ItemModel ref;
+    private boolean hasRef;
 
     public MaterialComponent(String input) {
         this.input = input;
@@ -41,6 +45,13 @@ public class MaterialComponent {
         }
         return result;
     }
+
+    public @Nullable ItemModel fromGlobalRegistry(PlaceholderApplier placeholders){
+        if (hasRef) return ref;
+        hasRef = true;
+       return ref = GlobalItemRegistry.resolveItemModel(placeholders.setPlaceholders(input));
+    }
+
     public boolean isFinal(){
         return hasNoPlaceholders;
     }

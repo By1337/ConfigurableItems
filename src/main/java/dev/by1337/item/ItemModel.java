@@ -97,6 +97,11 @@ public class ItemModel {
         return components.get(type, def);
     }
 
+    @Contract(pure = true, value = "null -> false")
+    public <T> boolean has(@Nullable BaseComponent<T> type) {
+        return get(type) != null;
+    }
+
 
     public ItemStack build() {
         return build(s -> s);

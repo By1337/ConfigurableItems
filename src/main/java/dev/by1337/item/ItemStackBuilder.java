@@ -40,6 +40,16 @@ public class ItemStackBuilder {
             return build(model, placeholders, cache);
         }
         var material = model.get(ItemComponents.MATERIAL, MaterialComponent.DEFAULT);
+
+        var baseModel = material.fromGlobalRegistry(placeholders);
+        if (baseModel != null) {
+            if (!baseModel.has(ItemComponents.MATERIAL)) {
+                //фикс рекурсии
+                baseModel = baseModel.withMaterial("dirt");
+            }
+            return build(baseModel.and(model), placeholders);
+        }
+
         ItemStack result = material.create(placeholders);
         ItemMeta im = result.getItemMeta();
         if (im == null) {
@@ -191,7 +201,7 @@ public class ItemStackBuilder {
 
         result.setItemMeta(im);
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
-        if (material.isFinal()){
+        if (material.isFinal()) {
             model.setCached(result.clone());
         }
         model.setDirty(false);
