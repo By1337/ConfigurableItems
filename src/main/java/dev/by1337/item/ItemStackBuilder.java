@@ -168,6 +168,9 @@ public class ItemStackBuilder {
             if (tooltip_style != null) {
                 im.setTooltipStyle(tooltip_style);
             }
+            if (model.has(ItemComponents.ITEM_MODEL)) {
+                im.setItemModel(model.get(ItemComponents.ITEM_MODEL));
+            }
         }
         if (model.getBool(ItemComponents.UNBREAKABLE)) {
             im.setUnbreakable(true);

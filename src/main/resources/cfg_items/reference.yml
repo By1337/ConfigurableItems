@@ -40,6 +40,7 @@ item: &self
   max_stack_size: 99 # 1-99 1.20.6+
   glider: true # 1.21.3+
   tooltip_style: minecraft:idk # 1.21.3+
+  item_model: dirt
   attributes:
     - name: example
       attribute: 'max_health' # https://jd.papermc.io/paper/org/bukkit/attribute/Attribute.html

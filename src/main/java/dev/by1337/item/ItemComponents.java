@@ -59,6 +59,9 @@ public class ItemComponents {
     //1.21.3+
     @Nullable
     public static final BaseComponent<NamespacedKey> TOOLTIP_STYLE = register("tooltip_style", BukkitCodecs.namespaced_key(), ServerVersion.is1_21_3orNewer());
+    //1.21.3+
+    @Nullable
+    public static final BaseComponent<NamespacedKey> ITEM_MODEL = register("item_model", BukkitCodecs.namespaced_key(), ServerVersion.is1_21_3orNewer());
 
     public static final YamlCodec<ComponentsHolder> COMPONENTS_CODEC;
 
@@ -218,6 +221,9 @@ public class ItemComponents {
                 }
                 if (im.hasTooltipStyle()) {
                     result.set(ItemComponents.TOOLTIP_STYLE, im.getTooltipStyle());
+                }
+                if (im.hasItemModel()){
+                    result.set(ItemComponents.TOOLTIP_STYLE, im.getItemModel());
                 }
 
             }
