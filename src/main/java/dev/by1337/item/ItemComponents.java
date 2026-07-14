@@ -125,9 +125,9 @@ public class ItemComponents {
         if (name != null) {
             result.set(ItemComponents.NAME, name);
         }
-        result.set(ItemComponents.AMOUNT, new IntHolder(Integer.toString(itemStack.getAmount())));
+        result.set(ItemComponents.AMOUNT, new IntHolder(itemStack.getAmount()));
         if (im instanceof Damageable damageable) {
-            result.set(ItemComponents.DAMAGE, new IntHolder(Integer.toString(damageable.getDamage())));
+            result.set(ItemComponents.DAMAGE, new IntHolder(damageable.getDamage()));
         }
         var attributes = im.getAttributeModifiers();
         if (attributes != null) {

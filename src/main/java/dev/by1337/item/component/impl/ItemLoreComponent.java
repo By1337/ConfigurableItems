@@ -22,7 +22,7 @@ public class ItemLoreComponent implements MergeableComponent<ItemLoreComponent> 
         boolean mutable = false;
         for (ComponentLike like : lore) {
             if (like instanceof SourcedComponentLike s){
-                if (hasPlaceholders(s.source())){
+                if (hasPlaceholdersOrLang(s.source())){
                     mutable = true;
                     break;
                 }
@@ -41,12 +41,12 @@ public class ItemLoreComponent implements MergeableComponent<ItemLoreComponent> 
         return lore;
     }
 
-    public boolean hasPlaceholders() {
+    public boolean hasPlaceholdersOrLang() {
         return hasPlaceholders;
     }
 
-    private static boolean hasPlaceholders(String input) {
-        return input.contains("{") || input.contains("%");
+    private static boolean hasPlaceholdersOrLang(String input) {
+        return input.contains("{") || input.contains("%") || input.contains("<lang");
     }
 
 

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class ItemModel {
@@ -38,7 +39,7 @@ public class ItemModel {
 
     @Contract(pure = true, value = "_ -> new")
     public ItemModel withAmount(int amount) {
-        return withAmount(Integer.toString(amount));
+        return with(c -> c.set(ItemComponents.AMOUNT, new IntHolder(amount)));
     }
 
     @Contract(pure = true, value = "_ -> new")
@@ -109,6 +110,10 @@ public class ItemModel {
 
     public ItemStack build(PlaceholderApplier placeholders) {
         return ItemStackBuilder.build(this, placeholders);
+    }
+
+    public ItemStack build(PlaceholderApplier placeholders, @Nullable Locale locale) {
+        return ItemStackBuilder.build(this, placeholders, locale);
     }
 
     @ApiStatus.Experimental

@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -25,6 +26,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.PotionEffect;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -35,9 +37,13 @@ public class ItemStackBuilder {
     private static final Set<Material> ITEMS_WHICH_ATTRIBUTES;
 
     public static ItemStack build(ItemModel model, PlaceholderApplier placeholders) {
+        return build(model, placeholders, null);
+    }
+
+    public static ItemStack build(ItemModel model, PlaceholderApplier placeholders, @Nullable Locale locale) {
         var cache = model.cached();
         if (cache != null && !model.dirty()) {
-            return build(model, placeholders, cache);
+            return buildDisplay(model, placeholders, cache, locale);
         }
         var material = model.get(ItemComponents.MATERIAL, MaterialComponent.DEFAULT);
 
@@ -178,12 +184,12 @@ public class ItemStackBuilder {
 
         var name = model.get(ItemComponents.NAME);
         if (name != null) {
-            im.displayName(toComponent(name, placeholders));
+            im.displayName(render(toComponent(name, placeholders), locale));
         }
         var lore = model.get(ItemComponents.LORE);
         if (lore != null) {
             List<Component> loreComponents = new ArrayList<>();
-            lore.forEachLore(line -> applyComponent(line, placeholders, loreComponents::add));
+            lore.forEachLore(line -> applyComponent(line, placeholders, v -> loreComponents.add(render(v, locale))));
             im.lore(loreComponents);
         }
         if (im instanceof Damageable damageable) {
@@ -211,7 +217,7 @@ public class ItemStackBuilder {
         return result;
     }
 
-    private static ItemStack build(ItemModel model, PlaceholderApplier placeholders, ItemStack cache) {
+    private static ItemStack buildDisplay(ItemModel model, PlaceholderApplier placeholders, ItemStack cache, @Nullable Locale locale) {
         var result = cache.clone();
         var meta = result.getItemMeta();
         if (meta != null) {
@@ -219,19 +225,24 @@ public class ItemStackBuilder {
                 damageable.setDamage(model.get(ItemComponents.DAMAGE, IntHolder.ZERO).getOrDefault(placeholders, 0));
             }
             var lore = model.get(ItemComponents.LORE);
-            if (lore != null && lore.hasPlaceholders()) {
+            if (lore != null && lore.hasPlaceholdersOrLang()) {
                 List<Component> loreComponents = new ArrayList<>();
-                lore.forEachLore(line -> applyComponent(line, placeholders, loreComponents::add));
+                lore.forEachLore(line -> applyComponent(line, placeholders, v -> loreComponents.add(render(v, locale))));
                 meta.lore(loreComponents);
             }
             var name = model.get(ItemComponents.NAME);
             if (name != null) {
-                meta.displayName(toComponent(name, placeholders));
+                meta.displayName(render(toComponent(name, placeholders), locale));
             }
             result.setItemMeta(meta);
         }
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
         return result;
+    }
+
+    private static Component render(Component c, @Nullable Locale l) {
+        if (l == null) return c;
+        return GlobalTranslator.render(c, l);
     }
 
     private static boolean hasPlaceholders(String input) {

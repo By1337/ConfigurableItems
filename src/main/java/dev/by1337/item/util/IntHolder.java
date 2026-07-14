@@ -16,9 +16,14 @@ public class IntHolder {
     public static final IntHolder ONE = new IntHolder("1");
 
     private static final Logger log = LoggerFactory.getLogger(IntHolder.class);
-    private final String src;
+    private String src;
     private int value;
     private boolean cashed;
+
+    public IntHolder(int value) {
+        this.value = value;
+        cashed = true;
+    }
 
     public IntHolder(String src) {
         this.src = src;
@@ -49,11 +54,13 @@ public class IntHolder {
             return OptionalInt.empty();
         }
     }
-    public boolean isFinal(){
+
+    public boolean isFinal() {
         return cashed;
     }
 
     public String src() {
+        if (src == null) return src = Integer.toString(value);
         return src;
     }
 
