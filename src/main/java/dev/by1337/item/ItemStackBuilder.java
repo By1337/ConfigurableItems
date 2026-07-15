@@ -53,7 +53,7 @@ public class ItemStackBuilder {
                 //фикс рекурсии
                 baseModel = baseModel.withMaterial("dirt");
             }
-            return build(baseModel.and(model), placeholders);
+            return build(baseModel.and(model), placeholders, locale);
         }
 
         ItemStack result = material.create(placeholders);
@@ -201,10 +201,20 @@ public class ItemStackBuilder {
                 ContainerComponent c = model.get(ItemComponents.CONTAINER);
                 if (c != null) {
                     for (Int2ObjectMap.Entry<ItemModel> entry : c.items().int2ObjectEntrySet()) {
-                        container.getInventory().setItem(entry.getIntKey(), build(entry.getValue(), placeholders));
+                        container.getInventory().setItem(entry.getIntKey(), build(entry.getValue(), placeholders, locale));
                     }
                 }
                 bsm.setBlockState(container);
+            }
+        }
+        if (ServerVersion.is1_17orNewer()) {
+            if (im instanceof BundleMeta bundleMeta) {
+                var content = model.get(ItemComponents.BUNDLE_CONTENTS);
+                if (content != null){
+                    List<ItemStack> items = new ArrayList<>();
+                    content.contents().forEach(m -> items.add(build(m, placeholders, locale)));
+                    bundleMeta.setItems(items);
+                }
             }
         }
 

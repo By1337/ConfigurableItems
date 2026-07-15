@@ -44,6 +44,9 @@ public class ItemComponents {
     public static final BaseComponent<HideFlagsComponents> HIDE_FLAGS = register("item_flags", HideFlagsComponents.CODEC);
     public static final BaseComponent<BasePotionComponent> BASE_POTION = register("potion", BasePotionComponent.CODEC);
     public static final BaseComponent<AttributesComponent> ATTRIBUTES = register("attributes", AttributesComponent.CODEC);
+    //1.17+
+    @Nullable
+    public static final BaseComponent<BundleContentsComponent> BUNDLE_CONTENTS = register("bundle_contents", BundleContentsComponent.CODEC, ServerVersion.is1_17orNewer());
     //1.19.4+
     @Nullable
     public static final BaseComponent<ArmorTrimComponent> TRIM = register("trim", ArmorTrimComponent.CODEC, ArmorTrimComponent.CODEC != null);
@@ -138,7 +141,7 @@ public class ItemComponents {
         }
         if (im instanceof SkullMeta skull) {
             var profile = skull.getPlayerProfile();
-            if (profile != null){
+            if (profile != null) {
                 for (ProfileProperty property : profile.getProperties()) {
                     if (property.getName().equals("textures")) {
                         result.set(ItemComponents.MATERIAL, new MaterialComponent("basehead-" + property.getValue()));
@@ -245,6 +248,14 @@ public class ItemComponents {
                     result.set(ItemComponents.TOOLTIP_STYLE, im.getItemModel());
                 }
 
+            }
+        }
+        if (ServerVersion.is1_17orNewer()) {
+            if (im instanceof BundleMeta bundleMeta) {
+                var items = bundleMeta.getItems();
+                List<ItemModel> itemModels = new ArrayList<>(items.size());
+                items.forEach(v -> itemModels.add(ItemModel.fromItemStack(v)));
+                result.set(ItemComponents.BUNDLE_CONTENTS, new BundleContentsComponent(itemModels));
             }
         }
         var set = im.getItemFlags();
