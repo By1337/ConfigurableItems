@@ -1,5 +1,6 @@
 package dev.by1337.item;
 
+import com.destroystokyo.paper.profile.ProfileProperty;
 import dev.by1337.core.ServerVersion;
 import dev.by1337.core.util.text.component.SourcedComponentLike;
 import dev.by1337.item.component.BaseComponent;
@@ -135,9 +136,27 @@ public class ItemComponents {
             attributes.forEach((k, v) -> modifiers.add(new AttributesComponent.Entry(k, v)));
             result.set(ItemComponents.ATTRIBUTES, new AttributesComponent(modifiers));
         }
-        //todo skulls
-        String material = itemStack.getType().getKey().asString();
-        result.set(ItemComponents.MATERIAL, new MaterialComponent(material));
+        if (im instanceof SkullMeta skull) {
+            var profile = skull.getPlayerProfile();
+            if (profile != null){
+                for (ProfileProperty property : profile.getProperties()) {
+                    if (property.getName().equals("textures")) {
+                        result.set(ItemComponents.MATERIAL, new MaterialComponent("basehead-" + property.getValue()));
+                        break;
+                    }
+                }
+                if (result.get(ItemComponents.MATERIAL) == null) {
+                    var uuid = profile.getId();
+                    if (uuid != null) {
+                        result.set(ItemComponents.MATERIAL, new MaterialComponent("player-" + uuid));
+                    }
+                }
+            }
+        }
+        if (result.get(ItemComponents.MATERIAL) == null) {
+            String material = itemStack.getType().getKey().asString();
+            result.set(ItemComponents.MATERIAL, new MaterialComponent(material));
+        }
         if (ServerVersion.is1_21_4orNewer()) {
             //noinspection all
             var v = im.getCustomModelDataComponent();
@@ -183,7 +202,7 @@ public class ItemComponents {
         if (im.isUnbreakable()) {
             result.set(ItemComponents.UNBREAKABLE, true);
         }
-        if (im instanceof BlockStateMeta state && state instanceof Container container) {
+        if (im instanceof BlockStateMeta state && state.getBlockState() instanceof Container container) {
             Int2ObjectOpenHashMap<ItemModel> map = new Int2ObjectOpenHashMap<>();
             var inv = container.getInventory();
             var arr = inv.getStorageContents();
@@ -222,7 +241,7 @@ public class ItemComponents {
                 if (im.hasTooltipStyle()) {
                     result.set(ItemComponents.TOOLTIP_STYLE, im.getTooltipStyle());
                 }
-                if (im.hasItemModel()){
+                if (im.hasItemModel()) {
                     result.set(ItemComponents.TOOLTIP_STYLE, im.getItemModel());
                 }
 

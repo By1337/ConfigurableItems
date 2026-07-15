@@ -87,7 +87,7 @@ public class MaterialComponent {
                     try {
                         UUID uuid = UUID.fromString(value);
                         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-                        head.editMeta(m -> ((SkullMeta) (m)).setOwningPlayer(Bukkit.getOfflinePlayer(uuid)));
+                        head.editMeta(m -> ((SkullMeta) (m)).setPlayerProfile(Bukkit.createProfile(uuid)));
                         return head;
                     } catch (Exception ignore) {
                     }
