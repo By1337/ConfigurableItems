@@ -22,6 +22,11 @@ public class ComponentsHolder {
         return get(type, false);
     }
 
+    @Contract(pure = true, value = "null -> false")
+    public <T> boolean has(@Nullable BaseComponent<T> type) {
+        return get(type) != null;
+    }
+
     @Nullable
     public <T> T get(@Nullable BaseComponent<T> type) {
         if (type == null) return null;
@@ -49,6 +54,9 @@ public class ComponentsHolder {
                 components[i] = def.components[i];
             }
         }
+    }
+    public Object[] raw(){
+        return components;
     }
 
     @Contract(pure = true, value = " -> new")
