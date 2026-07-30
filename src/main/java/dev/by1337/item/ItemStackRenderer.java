@@ -52,7 +52,7 @@ public class ItemStackRenderer {
 
     public static ItemStack render(ItemModel item, PlaceholderApplier placeholders, @Nullable Locale locale, @Nullable RenderFilter filter) {
         var cache = item.cached();
-        if (cache != null && !item.dirty()) {
+        if (cache != null && !item.dirty() && filter == null) {
             return renderDisplay(item, placeholders, cache, locale);
         }
         ComponentsHolder model = filter == null ? item.components() : filter.applyAndGet(item.components().copy());
@@ -230,7 +230,7 @@ public class ItemStackRenderer {
 
         result.setItemMeta(im);
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
-        if (material.isFinal()) {
+        if (material.isFinal() && filter == null) {
             item.setCached(result.clone());
         }
         item.setDirty(false);
