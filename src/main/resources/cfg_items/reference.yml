@@ -23,6 +23,12 @@ item: &self
     enchantment: lvl
     infinity: 0
   unbreakable: true
+
+  bundle_contents: # 1.17+
+    - material: dirt
+    - material: stone
+    - *self
+
   container:
     slot: {}
     0:
