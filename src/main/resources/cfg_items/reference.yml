@@ -22,6 +22,10 @@ item: &self
   enchantments: # https://jd.papermc.io/paper/org/bukkit/enchantments/Enchantment.html
     enchantment: lvl
     infinity: 0
+  # books
+  stored_enchantments: # https://jd.papermc.io/paper/org/bukkit/enchantments/Enchantment.html
+    enchantment: lvl
+    infinity: 0
   unbreakable: true
 
   bundle_contents: # 1.17+

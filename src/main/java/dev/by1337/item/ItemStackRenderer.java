@@ -227,6 +227,11 @@ public class ItemStackRenderer {
                 }
             }
         }
+        if (im instanceof EnchantmentStorageMeta s) {
+            var stored = model.get(ItemComponents.STORED_ENCHANTMENTS);
+            if (stored != null)
+                stored.enchantments().forEach(e -> s.addStoredEnchant(e.enchantment(), e.lvl(), true));
+        }
 
         result.setItemMeta(im);
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
@@ -294,13 +299,15 @@ public class ItemStackRenderer {
         public RenderFilter() {
             components = new boolean[INIT_SIZE];
         }
-        public ComponentsHolder applyAndGet(ComponentsHolder b){
+
+        public ComponentsHolder applyAndGet(ComponentsHolder b) {
             for (int i = 0; i < components.length; i++) {
                 if (components[i]) b.raw()[i] = null;
             }
             return b;
         }
-        public RenderFilter only(BaseComponent<?>... arr){
+
+        public RenderFilter only(BaseComponent<?>... arr) {
             Arrays.fill(components, true);
             for (BaseComponent<?> c : arr) {
                 components[c.id()] = false;
@@ -309,18 +316,19 @@ public class ItemStackRenderer {
         }
 
 
-        public RenderFilter setSkip(BaseComponent<?> c){
+        public RenderFilter setSkip(BaseComponent<?> c) {
             components[c.id()] = true;
             return this;
         }
-        public RenderFilter setSkip(BaseComponent<?>... arr){
+
+        public RenderFilter setSkip(BaseComponent<?>... arr) {
             for (BaseComponent<?> c : arr) {
                 components[c.id()] = true;
             }
             return this;
         }
 
-        public boolean isSkip(@Nullable BaseComponent<?> c){
+        public boolean isSkip(@Nullable BaseComponent<?> c) {
             return c == null || components[c.id()];
         }
     }

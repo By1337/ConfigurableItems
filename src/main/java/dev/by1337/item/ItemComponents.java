@@ -44,6 +44,7 @@ public class ItemComponents {
     public static final BaseComponent<HideFlagsComponents> HIDE_FLAGS = register("item_flags", HideFlagsComponents.CODEC);
     public static final BaseComponent<BasePotionComponent> BASE_POTION = register("potion", BasePotionComponent.CODEC);
     public static final BaseComponent<AttributesComponent> ATTRIBUTES = register("attributes", AttributesComponent.CODEC);
+    public static final BaseComponent<StoredEnchantmentsComponent> STORED_ENCHANTMENTS = register("stored_enchantments", StoredEnchantmentsComponent.CODEC);
     //1.17+
     @Nullable
     public static final BaseComponent<BundleContentsComponent> BUNDLE_CONTENTS = register("bundle_contents", BundleContentsComponent.CODEC, ServerVersion.is1_17orNewer());
@@ -261,6 +262,11 @@ public class ItemComponents {
         var set = im.getItemFlags();
         if (!set.isEmpty()) {
             result.set(ItemComponents.HIDE_FLAGS, new HideFlagsComponents(set));
+        }
+        if (im instanceof EnchantmentStorageMeta s && s.hasStoredEnchants()){
+            List<StoredEnchantmentsComponent.Entry> list = new ArrayList<>();
+            s.getStoredEnchants().forEach((e, lvl) -> list.add(new StoredEnchantmentsComponent.Entry(e, lvl)));
+            result.set(ItemComponents.STORED_ENCHANTMENTS, new StoredEnchantmentsComponent(list));
         }
         return result;
     }
