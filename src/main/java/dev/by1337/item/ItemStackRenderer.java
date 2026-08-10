@@ -307,22 +307,25 @@ public class ItemStackRenderer {
             return b;
         }
 
-        public RenderFilter only(BaseComponent<?>... arr) {
+        public RenderFilter only(@Nullable BaseComponent<?>... arr) {
             Arrays.fill(components, true);
             for (BaseComponent<?> c : arr) {
+                if (c == null) continue;
                 components[c.id()] = false;
             }
             return this;
         }
 
 
-        public RenderFilter setSkip(BaseComponent<?> c) {
+        public RenderFilter setSkip(@Nullable BaseComponent<?> c) {
+            if (c == null) return this;
             components[c.id()] = true;
             return this;
         }
 
-        public RenderFilter setSkip(BaseComponent<?>... arr) {
+        public RenderFilter setSkip(@Nullable BaseComponent<?>... arr) {
             for (BaseComponent<?> c : arr) {
+                if (c == null) continue;
                 components[c.id()] = true;
             }
             return this;
@@ -343,6 +346,7 @@ public class ItemStackRenderer {
                 "*_helmet",
                 "*_chestplate",
                 "*_leggings",
+                "*_boots",
                 "trident",
                 "*_spear",
                 "mace",
