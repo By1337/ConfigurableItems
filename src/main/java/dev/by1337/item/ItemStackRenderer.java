@@ -8,6 +8,7 @@ import dev.by1337.item.component.ComponentsHolder;
 import dev.by1337.item.component.impl.AttributesComponent;
 import dev.by1337.item.component.impl.ContainerComponent;
 import dev.by1337.item.component.impl.MaterialComponent;
+import dev.by1337.item.util.ColorHolder;
 import dev.by1337.item.util.IntHolder;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.BukkitCodecs;
@@ -110,22 +111,10 @@ public class ItemStackRenderer {
             //todo Arrow
             basePotion.apply(pm);
         }
-
         var color0 = model.get(ItemComponents.COLOR);
         if (color0 != null) {
-            var color = color0.toBukkit();
-            if (im instanceof TropicalFishBucketMeta buket) {
-                var v = DyeColor.getByColor(color);
-                if (v != null) buket.setBodyColor(v);
-            } else if (im instanceof PotionMeta pm) {
-                pm.setColor(color);
-            } else if (im instanceof MapMeta map) {
-                map.setColor(color);
-            } else if (im instanceof LeatherArmorMeta m) {
-                m.setColor(color);
-            } else if (im instanceof FireworkEffectMeta effectMeta) {
-                effectMeta.setEffect(FireworkEffect.builder().withColor(color).build());
-            }
+            var v = color0.tryGet();
+            if (v != null) applyColor(im, v);
         }
         var enchantments = model.get(ItemComponents.ENCHANTMENTS);
         if (enchantments != null) {
@@ -242,6 +231,24 @@ public class ItemStackRenderer {
         return result;
     }
 
+    private static void applyColor(ItemMeta im, ColorHolder color0) {
+        if (color0 != null) {
+            var color = color0.toBukkit();
+            if (im instanceof TropicalFishBucketMeta buket) {
+                var v = DyeColor.getByColor(color);
+                if (v != null) buket.setBodyColor(v);
+            } else if (im instanceof PotionMeta pm) {
+                pm.setColor(color);
+            } else if (im instanceof MapMeta map) {
+                map.setColor(color);
+            } else if (im instanceof LeatherArmorMeta m) {
+                m.setColor(color);
+            } else if (im instanceof FireworkEffectMeta effectMeta) {
+                effectMeta.setEffect(FireworkEffect.builder().withColor(color).build());
+            }
+        }
+    }
+
     private static ItemStack renderDisplay(ItemModel model, PlaceholderApplier placeholders, ItemStack cache, @Nullable Locale locale) {
         var result = cache.clone();
         var meta = result.getItemMeta();
@@ -259,6 +266,13 @@ public class ItemStackRenderer {
             if (name != null) {
                 meta.displayName(render(toComponent(name, placeholders), locale));
             }
+
+            var color0 = model.get(ItemComponents.COLOR);
+            if (color0 != null && !color0.isFinal()) {
+                var v = color0.tryGet();
+                if (v != null) applyColor(meta, v);
+            }
+
             result.setItemMeta(meta);
         }
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));

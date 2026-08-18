@@ -12,7 +12,7 @@ public class ColorHolder {
                 try {
                     return DataResult.success(ColorHolder.fromHex(s));
                 } catch (Exception e) {
-                    return DataResult.error("Expected '#AARRGGBB', but got '" + s + "'");
+                    return DataResult.error("Expected '#AARRGGBB' or '#RRGGBB', but got '" + s + "'");
                 }
             },
             ColorHolder::toHex

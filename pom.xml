@@ -135,7 +135,7 @@
         <dependency>
             <groupId>dev.by1337.core</groupId>
             <artifactId>BLibV2</artifactId>
-            <version>1.6</version>
+            <version>1.7.8</version>
             <scope>provided</scope>
         </dependency>
 

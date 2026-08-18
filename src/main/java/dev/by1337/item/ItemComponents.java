@@ -7,6 +7,7 @@ import dev.by1337.item.component.BaseComponent;
 import dev.by1337.item.component.ComponentsHolder;
 import dev.by1337.item.component.impl.*;
 import dev.by1337.item.util.ColorHolder;
+import dev.by1337.item.util.DecodableHolder;
 import dev.by1337.item.util.Holder;
 import dev.by1337.item.util.IntHolder;
 import dev.by1337.item.util.dfu.YamlUpdater;
@@ -37,7 +38,7 @@ public class ItemComponents {
     public static final BaseComponent<MaterialComponent> MATERIAL = register("material", MaterialComponent.CODEC);
     public static final BaseComponent<CustomModelDataComponent> MODEL_DATA = register("model_data", CustomModelDataComponent.CODEC);
     public static final BaseComponent<PotionContentsComponent> POTION_CONTENTS = register("potion_contents", PotionContentsComponent.CODEC);
-    public static final BaseComponent<ColorHolder> COLOR = register("color", ColorHolder.CODEC);
+    public static final BaseComponent<DecodableHolder<ColorHolder>> COLOR = register("color", YamlCodec.STRING.map(s -> new DecodableHolder<>(s, ColorHolder::fromHex)));
     public static final BaseComponent<EnchantmentsComponent> ENCHANTMENTS = register("enchantments", EnchantmentsComponent.CODEC);
     public static final BaseComponent<Boolean> UNBREAKABLE = register("unbreakable", YamlCodec.BOOL);
     public static final BaseComponent<ContainerComponent> CONTAINER = register("container", ContainerComponent.CODEC);
@@ -188,14 +189,14 @@ public class ItemComponents {
                 result.set(ItemComponents.POTION_CONTENTS, new PotionContentsComponent(potionMeta.getCustomEffects()));
             }
             if (potionMeta.hasColor()) {
-                result.set(ItemComponents.COLOR, ColorHolder.fromBukkit(potionMeta.getColor()));
+                result.set(ItemComponents.COLOR, new DecodableHolder<>(ColorHolder.fromBukkit(potionMeta.getColor())));
             }
             var v = BasePotionComponent.fromMeta(potionMeta);
             if (v != null)
                 result.set(ItemComponents.BASE_POTION, v);
         }
         if (im instanceof LeatherArmorMeta m) {
-            result.set(ItemComponents.COLOR, ColorHolder.fromBukkit(m.getColor()));
+            result.set(ItemComponents.COLOR, new DecodableHolder<>(ColorHolder.fromBukkit(m.getColor())));
         }
         {
             var map = im.getEnchants();
