@@ -3,7 +3,8 @@ package dev.by1337.item.util.dfu;
 import dev.by1337.yaml.YamlMap;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
-import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+@ApiStatus.Internal
 public class PotionContentsUpdater {
     private static final Map<String, String> NAME_UPDATER = Map.of(
             "slow", "slowness",
@@ -33,7 +34,7 @@ public class PotionContentsUpdater {
         if (toMap == null) {
             var map = in.asYamlMap();
             if (map.hasResult()) {
-                toMap = new YamlMap((LinkedHashMap<String, Object>) YamlUpdater.deepCopy(map.getOrThrow().getRaw()));
+                toMap = map.getOrThrow().deepCopy();
             } else {
                 log.error("Failed to update potion_contents cuz {}", map.error());
                 return null;
@@ -52,7 +53,7 @@ public class PotionContentsUpdater {
     // speed;20;0 -> map{type: "duration amplifier"}
     private static YamlMap potionContentsUpdater(YamlValue value) {
         if (value.isMap()) return null;
-        DataResult<List<String>> legacy = YamlCodec.STRINGS.decode(value);
+        DataResult<List<String>> legacy = YamlDecoder.STRINGS.decode(value);
         if (!legacy.hasResult()) {
             log.error("Failed to update potion_contents cuz {}", legacy.error());
             return null;

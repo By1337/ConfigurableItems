@@ -3,16 +3,17 @@ package dev.by1337.item.util.dfu;
 import dev.by1337.yaml.YamlMap;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
-import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Function;
-
+@ApiStatus.Internal
 public class YamlUpdater {
     private static final List<String> ALL_ITEM_FLAGS = Arrays.stream(ItemFlag.values()).map(Enum::name).toList();
     private static final String FIXER = "$" + YamlUpdater.class.getName().replace(".", "_");
@@ -33,7 +34,7 @@ public class YamlUpdater {
         update(map, "potion_contents", v -> PotionContentsUpdater.update(map, v));
         if (map.get("enchanted").asBool(false)) {
             map.set("$enchanted", "apply");
-            var list = map.get("item_flags").decode(YamlCodec.STRINGS).orDefault(List.of());
+            var list = YamlDecoder.STRINGS.decode(map.get("item_flags")).orDefault(List.of());
             rename(map, "item_flags", "$enchanted$item_flags");
             List<String> result = new ArrayList<>(list);
             result.add(ItemFlag.HIDE_ENCHANTS.name().toLowerCase());
@@ -66,7 +67,7 @@ public class YamlUpdater {
     // <enchantment>;<lvl> -> map{enchantment: lvl}
     private static Object enchantmentsUpdater(YamlValue value){
         if (value.isMap()) return null;
-        DataResult<List<String>> legacy = YamlCodec.STRINGS.decode(value);
+        DataResult<List<String>> legacy = YamlDecoder.STRINGS.decode(value);
         if (!legacy.hasResult()){
             log.error("Failed to update enchantments cuz {}", legacy.error());
             return null;

@@ -4,29 +4,30 @@ import dev.by1337.item.component.MergeableComponent;
 import dev.by1337.yaml.BukkitCodecs;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
-import dev.by1337.yaml.codec.RecordYamlCodecBuilder;
 import dev.by1337.yaml.codec.YamlCodec;
-import dev.by1337.yaml.codec.schema.SchemaType;
-import org.bukkit.NamespacedKey;
+import dev.by1337.yaml.decoder.RecordYamlDecoder;
+import dev.by1337.yaml.decoder.YamlDecoder;
+import dev.by1337.yaml.decoder.k2v.LookupDecoder;
 import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.inventory.EquipmentSlot;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Supplier;
 
 public record AttributesComponent(List<Entry> modifiers) implements MergeableComponent<AttributesComponent> {
-    public static YamlCodec<AttributesComponent> CODEC = Entry.CODEC.listOf()
-            .map(AttributesComponent::new, AttributesComponent::modifiers);
+    public static YamlDecoder<AttributesComponent> DECODER = Entry.DECODER.listOf().map(AttributesComponent::new);
+    @Deprecated
+    public static YamlCodec<AttributesComponent> CODEC = YamlCodec.of(DECODER);
 
     public record Entry(Attribute attribute, AttributeModifier modifier) {
-        public static final YamlCodec<Entry> CODEC = RecordYamlCodecBuilder.mapOf(
+        public static final YamlDecoder<Entry> DECODER = RecordYamlDecoder.mapOf(
                 Entry::new,
-                Codecs.ATTRIBUTE_CODEC.fieldOf("attribute", Entry::attribute),
-                Codecs.ATTRIBUTE_MODIFIER_CODEC.fieldOf(null, Entry::modifier)
+                Decoders.ATTRIBUTE_DECODER.fieldOf("attribute"),
+                Decoders.ATTRIBUTE_MODIFIER_DECODER.fieldOf()
         );
+        public static final YamlCodec<Entry> CODEC = YamlCodec.of(DECODER);
     }
 
     @Override
@@ -36,8 +37,8 @@ public record AttributesComponent(List<Entry> modifiers) implements MergeableCom
         return new AttributesComponent(modifiers);
     }
 
-    private static class Codecs {
-        private static final YamlCodec<Attribute> ATTRIBUTE_CODEC = make(() -> {
+    private static class Decoders {
+        private static final YamlDecoder<Attribute> ATTRIBUTE_DECODER = make(() -> {
             Map<String, Attribute> normal = new HashMap<>();
             for (Attribute attr : Registry.ATTRIBUTE) {
                 normal.put(attr.getKey().toString(), attr);
@@ -45,31 +46,17 @@ public record AttributesComponent(List<Entry> modifiers) implements MergeableCom
                 String fixed = name.substring(name.lastIndexOf(".") + 1);
                 normal.put(fixed, attr);
             }
-            YamlCodec<Attribute> codec = YamlCodec.lookup(normal);
-            return new YamlCodec<Attribute>() {
-                @Override
-                public DataResult<Attribute> decode(YamlValue yaml) {
-                    var res = codec.decode(yaml);
-                    if (res.hasResult()) return res;
-                    return STRING.decode(yaml).flatMap(s -> {
-                        String fixed = s.substring(s.lastIndexOf(".") + 1)
-                                .replace("GENERIC_", "")
-                                .replace("HORSE_", "")
-                                .replace("ZOMBIE_", "")
-                                ;
-                        return codec.decode(fixed);
-                    });
-                }
-
-                @Override
-                public YamlValue encode(Attribute attribute) {
-                    return codec.encode(attribute);
-                }
-
-                @Override
-                public @NotNull SchemaType schema() {
-                    return codec.schema();
-                }
+            YamlDecoder<Attribute> decoder = new LookupDecoder<>(normal);
+            return (ctx, yaml) -> {
+                var res = decoder.decode(ctx, yaml);
+                if (res.hasResult()) return res;
+                return YamlDecoder.STRING.decode(ctx, yaml).flatMap(s -> {
+                    String fixed = s.substring(s.lastIndexOf(".") + 1)
+                            .replace("GENERIC_", "")
+                            .replace("HORSE_", "")
+                            .replace("ZOMBIE_", "");
+                    return decoder.decode(ctx, YamlValue.wrap(fixed));
+                });
             };
         });
 
@@ -77,19 +64,21 @@ public record AttributesComponent(List<Entry> modifiers) implements MergeableCom
             return s.get();
         }
 
-        public static final YamlCodec<AttributeModifier> ATTRIBUTE_MODIFIER_CODEC = AttributeData.CODEC
-                .map(AttributeData::toAttributeModifier, AttributeData::fromAttributeModifier);
+        public static final YamlDecoder<AttributeModifier> ATTRIBUTE_MODIFIER_DECODER =
+                AttributeData.DECODER.map(AttributeData::toAttributeModifier);
 
         private record AttributeData(UUID uuid, String name, double amount, AttributeModifier.Operation operation,
                                      EquipmentSlot slot) {
-            private static final YamlCodec<AttributeModifier.Operation> OPERATION_CODEC = YamlCodec.fromEnum(AttributeModifier.Operation.class);
-            public static final YamlCodec<AttributeData> CODEC = RecordYamlCodecBuilder.mapOf(
+            private static final YamlDecoder<AttributeModifier.Operation> OPERATION_DECODER =
+                    LookupDecoder.fromEnum(AttributeModifier.Operation.values());
+            public static final YamlDecoder<AttributeData> DECODER = RecordYamlDecoder.mapOf(
                     AttributeData::new,
-                    YamlCodec.STRING.map(UUID::fromString, UUID::toString).fieldOf("uuid", AttributeData::uuid),
-                    YamlCodec.STRING.fieldOf("name", AttributeData::name),
-                    YamlCodec.DOUBLE.fieldOf("amount", AttributeData::amount),
-                    OPERATION_CODEC.fieldOf("operation", AttributeData::operation),
-                    BukkitCodecs.equipment_slot().fieldOf("slot", AttributeData::slot)
+                    YamlDecoder.STRING.flatMap(s -> DataResult.accept(() -> UUID.fromString(s), DataResult::error))
+                            .fieldOf("uuid"),
+                    YamlDecoder.STRING.fieldOf("name"),
+                    YamlDecoder.DOUBLE.fieldOf("amount"),
+                    OPERATION_DECODER.fieldOf("operation"),
+                    BukkitCodecs.equipment_slot().asDecoder().fieldOf("slot")
             );
 
             private AttributeData(UUID uuid, String name, double amount, AttributeModifier.Operation operation, EquipmentSlot slot) {

@@ -5,10 +5,11 @@ import com.destroystokyo.paper.profile.ProfileProperty;
 import dev.by1337.item.ItemModel;
 import dev.by1337.item.registry.GlobalItemRegistry;
 import dev.by1337.plc.PlaceholderApplier;
-import dev.by1337.yaml.BukkitCodecs;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.BukkitYamlDecoders;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,8 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class MaterialComponent {
-    public static final YamlCodec<MaterialComponent> CODEC =YamlCodec.STRING.schema(s -> s.or(BukkitCodecs.material().schema()))
-            .map(MaterialComponent::new, MaterialComponent::input);
+    public static final YamlDecoder<MaterialComponent> DECODER = YamlDecoder.STRING.map(MaterialComponent::new);
+    @Deprecated
+    public static final YamlCodec<MaterialComponent> CODEC = YamlCodec.of(DECODER);
     public static final MaterialComponent DEFAULT = new MaterialComponent("dirt");
     private static final Logger log = LoggerFactory.getLogger("CfgItems");
     private final String input;
@@ -66,7 +68,7 @@ public class MaterialComponent {
 
     private static class Builder {
 
-        private static final YamlCodec<Material> MATERIAL = BukkitCodecs.material();
+        private static final YamlDecoder<Material> MATERIAL = BukkitYamlDecoders.material();
 
         private static ItemStack build(String input) {
             if (input.startsWith("basehead-")) {

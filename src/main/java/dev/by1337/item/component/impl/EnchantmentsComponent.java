@@ -1,25 +1,23 @@
 package dev.by1337.item.component.impl;
 
 import dev.by1337.item.component.MergeableComponent;
-import dev.by1337.yaml.BukkitCodecs;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.BukkitYamlDecoders;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.enchantments.Enchantment;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public record EnchantmentsComponent(List<Entry> enchantments) implements MergeableComponent<EnchantmentsComponent> {
-    public static final YamlCodec<EnchantmentsComponent> CODEC =
-            YamlCodec.mapOf(BukkitCodecs.enchantment(), YamlCodec.INT).map(
-                            map -> map.entrySet().stream().map(e -> new Entry(e.getKey(), e.getValue())).toList(),
-                            list -> list.stream().collect(Collectors.toMap(
-                                    Entry::enchantment,
-                                    Entry::lvl
-                            )))
-                    .map(EnchantmentsComponent::new, EnchantmentsComponent::enchantments);
+    public static final YamlDecoder<EnchantmentsComponent> DECODER =
+            YamlDecoder.mapOf(BukkitYamlDecoders.enchantment(), YamlDecoder.INT).map(
+                    map -> new EnchantmentsComponent(map.entrySet().stream()
+                            .map(e -> new Entry(e.getKey(), e.getValue())).toList()));
+    @Deprecated
+    public static final YamlCodec<EnchantmentsComponent> CODEC = YamlCodec.of(DECODER);
 
     @Override
     public EnchantmentsComponent and(EnchantmentsComponent t1) {

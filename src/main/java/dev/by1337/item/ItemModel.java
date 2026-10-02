@@ -6,6 +6,7 @@ import dev.by1337.item.component.impl.MaterialComponent;
 import dev.by1337.item.util.IntHolder;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -15,7 +16,9 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 public class ItemModel {
+    @Deprecated
     public static final YamlCodec<ItemModel> CODEC;
+    public static final YamlDecoder<ItemModel> DECODER;
     public static final ItemModel AIR;
 
     private final ComponentsHolder components;
@@ -139,9 +142,7 @@ public class ItemModel {
     static {
         AIR = new ItemModel(new ComponentsHolder());
         AIR.components.set(ItemComponents.MATERIAL, new MaterialComponent("air"));
-        CODEC = ItemComponents.COMPONENTS_CODEC.map(
-                ItemModel::new,
-                i -> i.components
-        );
+        DECODER = ItemComponents.COMPONENTS_DECODER.map(ItemModel::new);
+        CODEC = YamlCodec.of(DECODER);
     }
 }

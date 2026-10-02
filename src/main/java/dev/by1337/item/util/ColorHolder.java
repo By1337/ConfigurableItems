@@ -3,20 +3,22 @@ package dev.by1337.item.util;
 import dev.by1337.core.ServerVersion;
 import dev.by1337.yaml.codec.DataResult;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.Color;
 import org.jetbrains.annotations.NotNull;
 
 public class ColorHolder {
-    public static final YamlCodec<ColorHolder> CODEC = YamlCodec.STRING.flatMap(
+    public static final YamlDecoder<ColorHolder> DECODER = YamlDecoder.STRING.flatMap(
             s -> {
                 try {
                     return DataResult.success(ColorHolder.fromHex(s));
                 } catch (Exception e) {
                     return DataResult.error("Expected '#AARRGGBB' or '#RRGGBB', but got '" + s + "'");
                 }
-            },
-            ColorHolder::toHex
+            }
     );
+    @Deprecated
+    public static final YamlCodec<ColorHolder> CODEC = YamlCodec.of(DECODER);
     public static final ColorHolder BLACK;
     public static final ColorHolder RED;
     public static final ColorHolder DARK_BLUE;

@@ -4,18 +4,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import dev.by1337.core.ServerVersion;
-import dev.by1337.yaml.KeyedYamlCodec;
-import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.DataResult;
 import dev.by1337.yaml.codec.YamlCodec;
-import dev.by1337.yaml.codec.schema.SchemaType;
-import dev.by1337.yaml.codec.schema.SchemaTypes;
+import dev.by1337.yaml.decoder.KeyedYamlDecoder;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Registry;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -24,10 +21,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class BasePotionComponent {
-    public static final YamlCodec<BasePotionComponent> CODEC = Pair.CODEC.map(
-            BasePotionComponent::new,
-            p -> p.data
-    );
+    public static final YamlDecoder<BasePotionComponent> DECODER = Pair.DECODER.map(BasePotionComponent::new);
+    @Deprecated
+    public static final YamlCodec<BasePotionComponent> CODEC = YamlCodec.of(DECODER);
     private final Pair data;
 
     private BasePotionComponent(Pair data) {
@@ -73,7 +69,7 @@ public class BasePotionComponent {
     }
 
     private record Pair(PotionType type, PotionData data) {
-        public static final YamlCodec<Pair> CODEC;
+        public static final YamlDecoder<Pair> DECODER;
 
         public static Pair of(String dat) {
             if (ServerVersion.is1_20_2orNewer()) {
@@ -85,44 +81,18 @@ public class BasePotionComponent {
 
         static {
             if (ServerVersion.is1_20_2orNewer()) {
-                KeyedYamlCodec<PotionType> codec = new KeyedYamlCodec<>(Registry.POTION, "PotionType");
-                CODEC = codec.map(
-                        t -> new Pair(t, null),
-                        Pair::type
-                );
+                DECODER = new KeyedYamlDecoder<PotionType>(Registry.POTION, "PotionType")
+                        .map(t -> new Pair(t, null));
             } else {
-                CODEC = new YamlCodec<>() {
-                    final static Map<String, PotionData> key2Data;
-                    final static SchemaType schema;
-
-                    @Override
-                    public DataResult<Pair> decode(YamlValue yaml) {
-                        return yaml.decode(STRING).flatMap(s -> {
-                            var v = key2Data.get(s);
-                            if (v == null) return DataResult.error("Unknown potion type " + s);
-                            return DataResult.success(new Pair(null, v));
-                        });
-                    }
-
-                    @Override
-                    public YamlValue encode(Pair pair) {
-                        return YamlValue.wrap(CraftPotionUtil.fromBukkit(pair.data));
-                    }
-
-                    @Override
-                    public @NotNull SchemaType schema() {
-                        return schema;
-                    }
-
-                    static {
-                        var keys = CraftPotionUtil.keys();
-                        schema = SchemaTypes.enumOf(keys);
-                        key2Data = new HashMap<>();
-                        for (String key : keys) {
-                            key2Data.put(key, CraftPotionUtil.toBukkit(key));
-                        }
-                    }
-                };
+                Map<String, PotionData> key2Data = new HashMap<>();
+                for (String key : CraftPotionUtil.keys()) {
+                    key2Data.put(key, CraftPotionUtil.toBukkit(key));
+                }
+                DECODER = YamlDecoder.STRING.flatMap(s -> {
+                    var v = key2Data.get(s);
+                    if (v == null) return DataResult.error("Unknown potion type " + s);
+                    return DataResult.success(new Pair(null, v));
+                });
             }
         }
     }

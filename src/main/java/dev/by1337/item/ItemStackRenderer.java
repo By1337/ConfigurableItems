@@ -1,7 +1,7 @@
 package dev.by1337.item;
 
 import dev.by1337.core.ServerVersion;
-import dev.by1337.core.util.text.component.RawTextComponent;
+import dev.by1337.core.util.text.minimessage.BMM;
 import dev.by1337.core.util.text.minimessage.MiniMessage;
 import dev.by1337.item.component.BaseComponent;
 import dev.by1337.item.component.ComponentsHolder;
@@ -10,6 +10,7 @@ import dev.by1337.item.component.impl.ContainerComponent;
 import dev.by1337.item.component.impl.MaterialComponent;
 import dev.by1337.item.util.ColorHolder;
 import dev.by1337.item.util.IntHolder;
+import dev.by1337.item.util.text.RawTextComponentLike;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.BukkitCodecs;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -183,12 +184,12 @@ public class ItemStackRenderer {
 
         var name = model.get(ItemComponents.NAME);
         if (name != null) {
-            im.displayName(render(toComponent(name, placeholders), locale));
+            im.displayName(toComponent(name, placeholders, locale));
         }
         var lore = model.get(ItemComponents.LORE);
         if (lore != null) {
             List<Component> loreComponents = new ArrayList<>();
-            lore.forEachLore(line -> applyComponent(line, placeholders, v -> loreComponents.add(render(v, locale))));
+            lore.forEachLore(line -> applyComponent(line, placeholders, locale, loreComponents::add));
             im.lore(loreComponents);
         }
         if (im instanceof Damageable damageable) {
@@ -259,12 +260,12 @@ public class ItemStackRenderer {
             var lore = model.get(ItemComponents.LORE);
             if (lore != null && lore.hasPlaceholdersOrLang()) {
                 List<Component> loreComponents = new ArrayList<>();
-                lore.forEachLore(line -> applyComponent(line, placeholders, v -> loreComponents.add(render(v, locale))));
+                lore.forEachLore(line -> applyComponent(line, placeholders, locale, loreComponents::add));
                 meta.lore(loreComponents);
             }
             var name = model.get(ItemComponents.NAME);
             if (name != null) {
-                meta.displayName(render(toComponent(name, placeholders), locale));
+                meta.displayName(toComponent(name, placeholders, locale));
             }
 
             var color0 = model.get(ItemComponents.COLOR);
@@ -279,29 +280,29 @@ public class ItemStackRenderer {
         return result;
     }
 
-    private static Component render(Component c, @Nullable Locale l) {
+/*    private static Component render(Component c, @Nullable Locale l) {
         if (l == null) return c;
         return GlobalTranslator.render(c, l);
     }
 
     private static boolean hasPlaceholders(String input) {
         return input.contains("{") || input.contains("%");
-    }
+    }*/
 
-    private static void applyComponent(ComponentLike c, PlaceholderApplier placeholders, Consumer<Component> processor) {
-        if (c instanceof RawTextComponent raw) {
-            String s = placeholders.setPlaceholders(raw.source());
+    private static void applyComponent(ComponentLike c, PlaceholderApplier placeholders, @Nullable Locale locale, Consumer<Component> processor) {
+        if (c instanceof RawTextComponentLike raw) {
+            String s = placeholders.setPlaceholders(raw.line());
             for (String line : s.split("\n")) {
-                processor.accept(MiniMessage.deserialize(line).decoration(TextDecoration.ITALIC, false));
+                processor.accept(BMM.deserialize(line, locale).decoration(TextDecoration.ITALIC, false));
             }
         } else {
             processor.accept(c.asComponent().decoration(TextDecoration.ITALIC, false));
         }
     }
 
-    private static Component toComponent(ComponentLike c, PlaceholderApplier placeholders) {
-        if (c instanceof RawTextComponent c1) {
-            return c1.asComponent(placeholders).decoration(TextDecoration.ITALIC, false);
+    private static Component toComponent(ComponentLike c, PlaceholderApplier placeholders, @Nullable Locale locale) {
+        if (c instanceof RawTextComponentLike c1) {
+            return c1.asComponent(placeholders, locale);
         }
         return c.asComponent().decoration(TextDecoration.ITALIC, false);
     }

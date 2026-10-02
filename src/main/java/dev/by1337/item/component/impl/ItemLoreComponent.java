@@ -1,8 +1,9 @@
 package dev.by1337.item.component.impl;
 
-import dev.by1337.core.util.text.component.SourcedComponentLike;
 import dev.by1337.item.component.MergeableComponent;
+import dev.by1337.item.util.text.RawTextComponentLike;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import net.kyori.adventure.text.ComponentLike;
 
 import java.util.ArrayList;
@@ -10,25 +11,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ItemLoreComponent implements MergeableComponent<ItemLoreComponent> {
-    public static YamlCodec<ItemLoreComponent> CODEC = SourcedComponentLike.COMPONENT_LIKE_CODEC
-            .listOf()
-            .map(ItemLoreComponent::new, ItemLoreComponent::lore);
+    public static YamlDecoder<ItemLoreComponent> DECODER = RawTextComponentLike.COMPONENT_DECODER.listOf()
+            .map(ItemLoreComponent::new);
+    @Deprecated
+    public static YamlCodec<ItemLoreComponent> CODEC = YamlCodec.of(DECODER);
 
     private final List<ComponentLike> lore;
     private final boolean hasPlaceholders;
 
     public ItemLoreComponent(List<ComponentLike> lore) {
         this.lore = lore;
-        boolean mutable = false;
-        for (ComponentLike like : lore) {
-            if (like instanceof SourcedComponentLike s){
-                if (hasPlaceholdersOrLang(s.source())){
-                    mutable = true;
-                    break;
-                }
-            }
-        }
-        this.hasPlaceholders = mutable;
+        this.hasPlaceholders = lore.stream().anyMatch(v -> v instanceof RawTextComponentLike);
     }
 
     public void forEachLore(Consumer<ComponentLike> consumer) {
@@ -44,11 +37,6 @@ public class ItemLoreComponent implements MergeableComponent<ItemLoreComponent> 
     public boolean hasPlaceholdersOrLang() {
         return hasPlaceholders;
     }
-
-    private static boolean hasPlaceholdersOrLang(String input) {
-        return input.contains("{") || input.contains("%") || input.contains("<lang");
-    }
-
 
     @Override
     public ItemLoreComponent and(ItemLoreComponent t1) {

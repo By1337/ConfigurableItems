@@ -2,6 +2,7 @@ package dev.by1337.item.registry;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -16,9 +17,14 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class ItemRegistry<T extends ItemModelHolder> implements Iterable<T> {
+    @Deprecated
     public static <T extends ItemModelHolder> YamlCodec<ItemRegistry<T>> codec(String space, YamlCodec<T> codec) {
-        return YamlCodec.mapOf(YamlCodec.STRING, codec)
-                .map(m -> new ItemRegistry<>(space, m), v -> v.idToItem);
+        return YamlCodec.of(decoder(space, codec.asDecoder()));
+    }
+
+    public static <T extends ItemModelHolder> YamlDecoder<ItemRegistry<T>> decoder(String space, YamlDecoder<T> decoder) {
+        return YamlDecoder.mapOf(YamlDecoder.STRING, decoder)
+                .map(m -> new ItemRegistry<>(space, m));
     }
 
     public static final @NotNull NamespacedKey REGISTRY_KEY = Objects.requireNonNull(NamespacedKey.fromString("registry:type"));
