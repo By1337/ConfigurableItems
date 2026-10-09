@@ -24,53 +24,57 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ItemComponents {
+    private static final Logger log = LoggerFactory.getLogger(ItemComponents.class);
     @Deprecated
     private static final List<BaseComponent<?>> COMPONENTS = new ArrayList<>();
     private static final List<YamlDecoder<?>> DECODERS = new ArrayList<>();
 
-    public static final BaseComponent<ItemLoreComponent> LORE = register("lore", ItemLoreComponent.DECODER);
-    public static final BaseComponent<ComponentLike> NAME = register("name", RawTextComponentLike.COMPONENT_DECODER);
-    public static final BaseComponent<IntHolder> AMOUNT = register("amount", IntHolder.DECODER);
-    public static final BaseComponent<IntHolder> DAMAGE = register("damage", IntHolder.DECODER);
-    public static final BaseComponent<MaterialComponent> MATERIAL = register("material", MaterialComponent.DECODER);
-    public static final BaseComponent<CustomModelDataComponent> MODEL_DATA = register("model_data", CustomModelDataComponent.DECODER);
-    public static final BaseComponent<PotionContentsComponent> POTION_CONTENTS = register("potion_contents", PotionContentsComponent.DECODER);
-    public static final BaseComponent<DecodableHolder<ColorHolder>> COLOR = register("color", YamlDecoder.STRING.map(s -> new DecodableHolder<>(s, ColorHolder::fromHex)));
-    public static final BaseComponent<EnchantmentsComponent> ENCHANTMENTS = register("enchantments", EnchantmentsComponent.DECODER);
-    public static final BaseComponent<Boolean> UNBREAKABLE = register("unbreakable", YamlDecoder.BOOL);
-    public static final BaseComponent<ContainerComponent> CONTAINER = register("container", ContainerComponent.DECODER);
-    public static final BaseComponent<HideFlagsComponents> HIDE_FLAGS = register("item_flags", HideFlagsComponents.DECODER);
-    public static final BaseComponent<BasePotionComponent> BASE_POTION = register("potion", BasePotionComponent.DECODER);
-    public static final BaseComponent<AttributesComponent> ATTRIBUTES = register("attributes", AttributesComponent.DECODER);
-    public static final BaseComponent<StoredEnchantmentsComponent> STORED_ENCHANTMENTS = register("stored_enchantments", StoredEnchantmentsComponent.DECODER);
+    public static final BaseComponent<ItemLoreComponent> LORE = safe(() -> register("lore", ItemLoreComponent.DECODER));
+    public static final BaseComponent<ComponentLike> NAME = safe(() -> register("name", RawTextComponentLike.COMPONENT_DECODER));
+    public static final BaseComponent<IntHolder> AMOUNT = safe(() -> register("amount", IntHolder.DECODER));
+    public static final BaseComponent<IntHolder> DAMAGE = safe(() -> register("damage", IntHolder.DECODER));
+    public static final BaseComponent<MaterialComponent> MATERIAL = safe(() -> register("material", MaterialComponent.DECODER));
+    public static final BaseComponent<CustomModelDataComponent> MODEL_DATA = safe(() -> register("model_data", CustomModelDataComponent.DECODER));
+    public static final BaseComponent<PotionContentsComponent> POTION_CONTENTS = safe(() -> register("potion_contents", PotionContentsComponent.DECODER));
+    public static final BaseComponent<DecodableHolder<ColorHolder>> COLOR = safe(() -> register("color", YamlDecoder.STRING.map(s -> new DecodableHolder<>(s, ColorHolder::fromHex))));
+    public static final BaseComponent<EnchantmentsComponent> ENCHANTMENTS = safe(() -> register("enchantments", EnchantmentsComponent.DECODER));
+    public static final BaseComponent<Boolean> UNBREAKABLE = safe(() -> register("unbreakable", YamlDecoder.BOOL));
+    public static final BaseComponent<ContainerComponent> CONTAINER = safe(() -> register("container", ContainerComponent.DECODER));
+    public static final BaseComponent<HideFlagsComponents> HIDE_FLAGS = safe(() -> register("item_flags", HideFlagsComponents.DECODER));
+    public static final BaseComponent<BasePotionComponent> BASE_POTION = safe(() -> register("potion", BasePotionComponent.DECODER));
+    public static final BaseComponent<AttributesComponent> ATTRIBUTES = safe(() -> register("attributes", AttributesComponent.DECODER));
+    public static final BaseComponent<StoredEnchantmentsComponent> STORED_ENCHANTMENTS = safe(() -> register("stored_enchantments", StoredEnchantmentsComponent.DECODER));
     //1.17+
     @Nullable
-    public static final BaseComponent<BundleContentsComponent> BUNDLE_CONTENTS = register("bundle_contents", BundleContentsComponent.DECODER, ServerVersion.is1_17orNewer());
+    public static final BaseComponent<BundleContentsComponent> BUNDLE_CONTENTS = safe(() -> register("bundle_contents", BundleContentsComponent.DECODER, ServerVersion.is1_17orNewer()));
     //1.19.4+
     @Nullable
-    public static final BaseComponent<ArmorTrimComponent> TRIM = register("trim", ArmorTrimComponent.DECODER, ArmorTrimComponent.DECODER != null);
+    public static final BaseComponent<ArmorTrimComponent> TRIM = safe(() -> register("trim", ArmorTrimComponent.DECODER, ArmorTrimComponent.DECODER != null));
     //1.20.5+
     @Nullable
-    public static final BaseComponent<Boolean> HIDE_TOOLTIP = register("hide_tooltip", YamlDecoder.BOOL, ServerVersion.is1_20_6orNewer());
+    public static final BaseComponent<Boolean> HIDE_TOOLTIP = safe(() -> register("hide_tooltip", YamlDecoder.BOOL, ServerVersion.is1_20_6orNewer()));
     @Nullable
-    public static final BaseComponent<Integer> MAX_STACK_SIZE = register("max_stack_size", YamlDecoder.INT, ServerVersion.is1_20_6orNewer());
+    public static final BaseComponent<Integer> MAX_STACK_SIZE = safe(() -> register("max_stack_size", YamlDecoder.INT, ServerVersion.is1_20_6orNewer()));
     @Nullable
-    public static final BaseComponent<Boolean> ENCHANTMENT_GLINT_OVERRIDE = register("enchantment_glint_override", YamlDecoder.BOOL, ServerVersion.is1_20_6orNewer());
+    public static final BaseComponent<Boolean> ENCHANTMENT_GLINT_OVERRIDE = safe(() -> register("enchantment_glint_override", YamlDecoder.BOOL, ServerVersion.is1_20_6orNewer()));
     //1.21.3+
     @Nullable
-    public static final BaseComponent<Boolean> GLIDER = register("glider", YamlDecoder.BOOL, ServerVersion.is1_21_3orNewer());
+    public static final BaseComponent<Boolean> GLIDER = safe(() -> register("glider", YamlDecoder.BOOL, ServerVersion.is1_21_3orNewer()));
     //1.21.3+
     @Nullable
-    public static final BaseComponent<NamespacedKey> TOOLTIP_STYLE = register("tooltip_style", BukkitYamlDecoders.namespaced_key(), ServerVersion.is1_21_3orNewer());
+    public static final BaseComponent<NamespacedKey> TOOLTIP_STYLE = safe(() -> register("tooltip_style", BukkitYamlDecoders.namespaced_key(), ServerVersion.is1_21_3orNewer()));
     //1.21.3+
     @Nullable
-    public static final BaseComponent<NamespacedKey> ITEM_MODEL = register("item_model", BukkitYamlDecoders.namespaced_key(), ServerVersion.is1_21_3orNewer());
+    public static final BaseComponent<NamespacedKey> ITEM_MODEL = safe(() -> register("item_model", BukkitYamlDecoders.namespaced_key(), ServerVersion.is1_21_3orNewer()));
 
     public static final YamlCodec<ComponentsHolder> COMPONENTS_CODEC;
     public static final YamlDecoder<ComponentsHolder> COMPONENTS_DECODER;
@@ -97,6 +101,15 @@ public class ItemComponents {
 
     public static List<BaseComponent<?>> list() {
         return Collections.unmodifiableList(COMPONENTS);
+    }
+
+    private static <T> T safe(Supplier<T> s) {
+        try {
+            return s.get();
+        } catch (LinkageError e) {
+            log.error("Failed run", e);
+            return null;
+        }
     }
 
     static {
