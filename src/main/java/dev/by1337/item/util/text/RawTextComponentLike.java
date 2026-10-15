@@ -14,7 +14,7 @@ import java.util.Locale;
 @ApiStatus.Internal
 public record RawTextComponentLike(String line) implements ComponentLike {
     public static final YamlDecoder<ComponentLike> COMPONENT_DECODER = YamlDecoder.STRING.map(s -> {
-        if (!hasPlaceholdersOrLang(s)) return BMM.deserialize(s).decoration(TextDecoration.ITALIC, false);
+        if (!hasPlaceholdersOrLang(s)) return new LazyDecodeComponentLike(s);
         return new RawTextComponentLike(s);
     });
 

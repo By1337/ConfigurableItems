@@ -1,6 +1,8 @@
 package dev.by1337.item.component;
 
-import dev.by1337.yaml.codec.YamlCodec;
+import dev.by1337.yaml.decoder.YamlDecoder;
+import org.jetbrains.annotations.ApiStatus;
 
-public record BaseComponent<T>(int id, String name, YamlCodec<T> codec) {
+@ApiStatus.Internal
+public record BaseComponent<T>(int id, String name, YamlDecoder<T> decoder) {
 }

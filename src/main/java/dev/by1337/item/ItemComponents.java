@@ -89,7 +89,7 @@ public class ItemComponents {
 
     private static <T> BaseComponent<T> register(String name, YamlDecoder<T> decoder) {
         int id = COMPONENTS.size();
-        var component = new BaseComponent<>(id, name, YamlCodec.of(decoder));
+        var component = new BaseComponent<>(id, name, decoder);
         COMPONENTS.add(component);
         DECODERS.add(decoder);
         return component;
