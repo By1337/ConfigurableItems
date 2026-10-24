@@ -1,23 +1,19 @@
 package dev.by1337.item;
 
 import dev.by1337.core.ServerVersion;
-import dev.by1337.core.util.text.minimessage.BMM;
-import dev.by1337.core.util.text.minimessage.MiniMessage;
 import dev.by1337.item.component.BaseComponent;
+import dev.by1337.item.registry.GlobalItemRegistry;
 import dev.by1337.item.component.ComponentsHolder;
 import dev.by1337.item.component.impl.AttributesComponent;
 import dev.by1337.item.component.impl.ContainerComponent;
 import dev.by1337.item.component.impl.MaterialComponent;
 import dev.by1337.item.util.ColorHolder;
 import dev.by1337.item.util.IntHolder;
-import dev.by1337.item.util.text.RawTextComponentLike;
+import dev.by1337.item.util.text.ItemTextRenderer;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.BukkitCodecs;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentLike;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -34,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Consumer;
 
 public class ItemStackRenderer {
     private static final RenderFilter CONTAINER_FILTER = new RenderFilter().only(
@@ -60,7 +55,8 @@ public class ItemStackRenderer {
         ComponentsHolder model = filter == null ? item.components() : filter.applyAndGet(item.components().copy());
         var material = model.get(ItemComponents.MATERIAL, MaterialComponent.DEFAULT);
 
-        var baseModel = material.fromGlobalRegistry(placeholders);
+        String resolvedMaterial = material.resolve(placeholders);
+        var baseModel = GlobalItemRegistry.resolveItemModel(resolvedMaterial);
         if (baseModel != null) {
             if (!baseModel.has(ItemComponents.MATERIAL)) {
                 //фикс рекурсии
@@ -69,7 +65,7 @@ public class ItemStackRenderer {
             return render(baseModel.and(item), placeholders, locale, filter);
         }
 
-        ItemStack result = material.create(placeholders);
+        ItemStack result = material.createResolved(resolvedMaterial);
         ItemMeta im = result.getItemMeta();
         if (im == null) {
             return result;
@@ -114,7 +110,7 @@ public class ItemStackRenderer {
         }
         var color0 = model.get(ItemComponents.COLOR);
         if (color0 != null) {
-            var v = color0.tryGet();
+            var v = color0.tryGet(placeholders);
             if (v != null) applyColor(im, v);
         }
         var enchantments = model.get(ItemComponents.ENCHANTMENTS);
@@ -184,12 +180,12 @@ public class ItemStackRenderer {
 
         var name = model.get(ItemComponents.NAME);
         if (name != null) {
-            im.displayName(toComponent(name, placeholders, locale));
+            im.displayName(ItemTextRenderer.name(name, placeholders, locale));
         }
         var lore = model.get(ItemComponents.LORE);
         if (lore != null) {
             List<Component> loreComponents = new ArrayList<>();
-            lore.forEachLore(line -> applyComponent(line, placeholders, locale, loreComponents::add));
+            lore.forEachLore(locale, line -> ItemTextRenderer.appendLore(line, placeholders, locale, loreComponents::add));
             im.lore(loreComponents);
         }
         if (im instanceof Damageable damageable) {
@@ -260,17 +256,17 @@ public class ItemStackRenderer {
             var lore = model.get(ItemComponents.LORE);
             if (lore != null && lore.hasPlaceholdersOrLang()) {
                 List<Component> loreComponents = new ArrayList<>();
-                lore.forEachLore(line -> applyComponent(line, placeholders, locale, loreComponents::add));
+                lore.forEachLore(locale, line -> ItemTextRenderer.appendLore(line, placeholders, locale, loreComponents::add));
                 meta.lore(loreComponents);
             }
             var name = model.get(ItemComponents.NAME);
             if (name != null) {
-                meta.displayName(toComponent(name, placeholders, locale));
+                meta.displayName(ItemTextRenderer.name(name, placeholders, locale));
             }
 
             var color0 = model.get(ItemComponents.COLOR);
             if (color0 != null && !color0.isFinal()) {
-                var v = color0.tryGet();
+                var v = color0.tryGet(placeholders);
                 if (v != null) applyColor(meta, v);
             }
 
@@ -278,33 +274,6 @@ public class ItemStackRenderer {
         }
         result.setAmount(model.get(ItemComponents.AMOUNT, IntHolder.ONE).getOrDefault(placeholders, 1));
         return result;
-    }
-
-/*    private static Component render(Component c, @Nullable Locale l) {
-        if (l == null) return c;
-        return GlobalTranslator.render(c, l);
-    }
-
-    private static boolean hasPlaceholders(String input) {
-        return input.contains("{") || input.contains("%");
-    }*/
-
-    private static void applyComponent(ComponentLike c, PlaceholderApplier placeholders, @Nullable Locale locale, Consumer<Component> processor) {
-        if (c instanceof RawTextComponentLike raw) {
-            String s = placeholders.setPlaceholders(raw.line());
-            for (String line : s.split("\n")) {
-                processor.accept(BMM.deserialize(line, locale).decoration(TextDecoration.ITALIC, false));
-            }
-        } else {
-            processor.accept(c.asComponent().decoration(TextDecoration.ITALIC, false));
-        }
-    }
-
-    private static Component toComponent(ComponentLike c, PlaceholderApplier placeholders, @Nullable Locale locale) {
-        if (c instanceof RawTextComponentLike c1) {
-            return c1.asComponent(placeholders, locale);
-        }
-        return c.asComponent().decoration(TextDecoration.ITALIC, false);
     }
 
     public static class RenderFilter {

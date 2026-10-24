@@ -2,17 +2,25 @@ package dev.by1337.item;
 
 import dev.by1337.item.component.BaseComponent;
 import dev.by1337.item.component.ComponentsHolder;
+import dev.by1337.item.component.impl.ItemLoreComponent;
 import dev.by1337.item.component.impl.MaterialComponent;
 import dev.by1337.item.util.IntHolder;
+import dev.by1337.item.util.text.RawTextComponentLike;
 import dev.by1337.plc.PlaceholderApplier;
 import dev.by1337.yaml.codec.YamlCodec;
 import dev.by1337.yaml.decoder.YamlDecoder;
+import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.Component;
+import dev.by1337.edsl.text.LocalizedText;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.function.Consumer;
 
 public class ItemModel {
@@ -117,6 +125,44 @@ public class ItemModel {
 
     public ItemStack build(PlaceholderApplier placeholders, @Nullable Locale locale) {
         return ItemStackBuilder.build(this, placeholders, locale);
+    }
+
+    /** Rewrites freshly decoded registry text to persistent translation references. */
+    @ApiStatus.Internal
+    public void registerTranslations(String prefix, Map<String, ComponentLike> translations) {
+        var name = get(ItemComponents.NAME);
+        if (name != null) {
+            String key = prefix + ".name";
+            translations.put(key, translationText(name));
+            components.set(ItemComponents.NAME, new RawTextComponentLike("<lang:" + key + ">"));
+        }
+        var lore = get(ItemComponents.LORE);
+        if (lore != null) {
+            var references = new ArrayList<ComponentLike>();
+            int lines = lore.lore().size();
+            for (var variant : lore.variants().values()) lines = Math.max(lines, variant.size());
+            for (int i = 0; i < lines; i++) {
+                String key = prefix + ".lore." + i;
+                ComponentLike fallback = i < lore.lore().size() ? translationText(lore.lore().get(i)) : Component.empty();
+                Map<Locale, ComponentLike> variants = new LinkedHashMap<>();
+                for (var variant : lore.variants().entrySet()) {
+                    var values = variant.getValue();
+                    variants.put(variant.getKey(), i < values.size() ? translationText(values.get(i)) : Component.empty());
+                }
+                translations.put(key, variants.isEmpty() ? fallback : new LocalizedText(fallback, variants));
+                references.add(new RawTextComponentLike("<lang:" + key + ">"));
+            }
+            components.set(ItemComponents.LORE, new ItemLoreComponent(references));
+        }
+        cached = null;
+    }
+
+    private static ComponentLike translationText(ComponentLike text) {
+        if (text instanceof LocalizedText localized) return localized.map(ItemModel::translationText);
+        if (text instanceof RawTextComponentLike raw) {
+            return new dev.by1337.edsl.text.RawTextComponentLike(raw.line());
+        }
+        return text;
     }
 
     @ApiStatus.Experimental

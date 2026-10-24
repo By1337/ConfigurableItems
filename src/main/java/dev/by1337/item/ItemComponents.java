@@ -11,6 +11,7 @@ import dev.by1337.item.util.Holder;
 import dev.by1337.item.util.IntHolder;
 import dev.by1337.item.util.dfu.YamlUpdater;
 import dev.by1337.item.util.text.RawTextComponentLike;
+import dev.by1337.item.util.text.ItemTextDecoders;
 import dev.by1337.yaml.YamlValue;
 import dev.by1337.yaml.codec.YamlCodec;
 import dev.by1337.yaml.decoder.BukkitYamlDecoders;
@@ -116,9 +117,12 @@ public class ItemComponents {
         var builder = PipelineYamlDecoder.of(ComponentsHolder::new);
         //noinspection rawtypes
         for (BaseComponent component : COMPONENTS) {
+            if (component == NAME || component == LORE) continue;
             //noinspection unchecked
             builder.field(DECODERS.get(component.id()), component.name(), (v, c) -> v.set(component, c));
         }
+        builder.field(ItemTextDecoders.NAME.fieldOf(), (holder, name) -> holder.set(NAME, name));
+        builder.field(ItemTextDecoders.LORE.fieldOf(), (holder, lore) -> holder.set(LORE, lore));
         COMPONENTS_DECODER = builder
                 .build()
                 .preDecode(v -> {

@@ -1,6 +1,8 @@
 package dev.by1337.item.component.impl;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import dev.by1337.item.ItemModel;
 import dev.by1337.item.registry.GlobalItemRegistry;
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class MaterialComponent {
     public static final YamlDecoder<MaterialComponent> DECODER = YamlDecoder.STRING.map(MaterialComponent::new);
@@ -28,30 +31,49 @@ public class MaterialComponent {
     public static final YamlCodec<MaterialComponent> CODEC = YamlCodec.of(DECODER);
     public static final MaterialComponent DEFAULT = new MaterialComponent("dirt");
     private static final Logger log = LoggerFactory.getLogger("CfgItems");
+    private static final Cache<String, ItemStack> TEMPLATES = CacheBuilder.newBuilder()
+            .maximumSize(2048).expireAfterAccess(10, TimeUnit.MINUTES).build();
     private final String input;
     private @Nullable ItemStack cashed;
     private final boolean hasNoPlaceholders;
-    private @Nullable ItemModel ref;
-    private boolean hasRef;
 
     public MaterialComponent(String input) {
         this.input = input;
         hasNoPlaceholders = hasNoPlaceholders(input);
     }
 
+    public String resolve(PlaceholderApplier placeholders) {
+        return placeholders.setPlaceholders(input).trim();
+    }
+
     public ItemStack create(PlaceholderApplier placeholders) {
         if (cashed != null) return cashed.clone();
-        ItemStack result = Builder.build(placeholders.setPlaceholders(input));
-        if (hasNoPlaceholders) {
-            cashed = result.clone();
+        return createResolved(resolve(placeholders));
+    }
+
+    /** The caller may reuse the same resolved input for global registry lookup. */
+    public ItemStack createResolved(String resolved) {
+        if (cashed != null) return cashed.clone();
+        ItemStack result;
+        // Player heads depend on live profile data; unresolved strings must not enter the cache.
+        if (resolved.startsWith("player-") || !hasNoPlaceholders(resolved)) {
+            result = Builder.build(resolved);
+        } else {
+            ItemStack template = TEMPLATES.getIfPresent(resolved);
+            if (template == null) {
+                result = Builder.build(resolved);
+                TEMPLATES.put(resolved, result.clone());
+            } else {
+                result = template.clone();
+            }
         }
+        if (hasNoPlaceholders && !resolved.startsWith("player-")) cashed = result.clone();
         return result;
     }
 
-    public @Nullable ItemModel fromGlobalRegistry(PlaceholderApplier placeholders){
-        if (hasRef) return ref;
-        hasRef = true;
-       return ref = GlobalItemRegistry.resolveItemModel(placeholders.setPlaceholders(input));
+    public @Nullable ItemModel fromGlobalRegistry(PlaceholderApplier placeholders) {
+        // Registry entries can change on reload and dynamic inputs can differ between players.
+        return GlobalItemRegistry.resolveItemModel(resolve(placeholders));
     }
 
     public boolean isFinal(){

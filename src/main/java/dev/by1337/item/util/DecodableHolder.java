@@ -1,6 +1,7 @@
 package dev.by1337.item.util;
 
 import org.jetbrains.annotations.Nullable;
+import dev.by1337.plc.PlaceholderApplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +31,17 @@ public class DecodableHolder<T> {
     }
 
     public @Nullable T tryGet() {
+        return tryGet(s -> s);
+    }
+
+    public @Nullable T tryGet(PlaceholderApplier placeholders) {
         if (cashed) return value;
+        String resolved = src;
         try {
-            return decoder.apply(src);
+            resolved = placeholders.setPlaceholders(src);
+            return decoder.apply(resolved);
         } catch (Exception e) {
-            log.error("Failed to parse {}", src, e);
+            log.error("Failed to parse {}", resolved, e);
         }
         return null;
     }

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.by1337.item</groupId>
     <artifactId>ConfigurableItems</artifactId>
-    <version>1.7</version>
+    <version>1.8.3</version>
 
     <properties>
         <java.version>16</java.version>
@@ -71,6 +71,25 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <!-- Keep the 1.16 API on the compiler path; use EventDSL's parser API only in tests. -->
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>net.kyori:adventure-api</classpathDependencyExclude>
+                        <classpathDependencyExclude>net.kyori:adventure-key</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
+                    <additionalClasspathDependencies>
+                        <additionalClasspathDependency>
+                            <groupId>net.kyori</groupId>
+                            <artifactId>adventure-api</artifactId>
+                            <version>4.20.0</version>
+                        </additionalClasspathDependency>
+                    </additionalClasspathDependencies>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -109,6 +128,13 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>dev.by1337.edsl</groupId>
+            <artifactId>EventDSL</artifactId>
+            <version>1.8.3</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- server -->
         <dependency>
             <groupId>io.paper</groupId>
@@ -174,6 +200,18 @@
             <artifactId>junit-jupiter</artifactId>
             <version>5.14.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>4.20.0</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

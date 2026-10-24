@@ -1,6 +1,9 @@
 package dev.by1337.item.registry;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dev.by1337.edsl.LangTranslator;
+import net.kyori.adventure.text.ComponentLike;
+import dev.by1337.yaml.codec.DataResult;
 import dev.by1337.yaml.codec.YamlCodec;
 import dev.by1337.yaml.decoder.YamlDecoder;
 import org.bukkit.NamespacedKey;
@@ -17,17 +20,34 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class ItemRegistry<T extends ItemModelHolder> implements Iterable<T> {
-    @Deprecated
-    public static <T extends ItemModelHolder> YamlCodec<ItemRegistry<T>> codec(String space, YamlCodec<T> codec) {
-        return YamlCodec.of(decoder(space, codec.asDecoder()));
-    }
-
     public static <T extends ItemModelHolder> YamlDecoder<ItemRegistry<T>> decoder(String space, YamlDecoder<T> decoder) {
         return YamlDecoder.mapOf(YamlDecoder.STRING, decoder)
                 .map(m -> new ItemRegistry<>(space, m));
     }
 
+    /**
+     * With translateText enabled, registers text in the shared LangTranslator registry.
+     * Item text is stored under space.item.name / space.item.lore.index; stacks keep lang references.
+     * The registry owns the translation prefix space and replaces it on each successful decode.
+     */
+    public static <T extends ItemModelHolder> YamlDecoder<ItemRegistry<T>> decoder(
+            String space, YamlDecoder<T> decoder, boolean translateText) {
+        if (!translateText) return decoder(space, decoder);
+        var itemsDecoder = YamlDecoder.mapOf(YamlDecoder.STRING, decoder);
+        return (ctx, yaml) -> {
+            var items = itemsDecoder.decode(ctx, yaml);
+            if (items.hasError() || !items.hasResult()) return DataResult.error(items.errorOrDefault("Failed to decode registry items"));
+            var registry = new ItemRegistry<T>(space, items.getOrThrow());
+            Map<String, ComponentLike> translations = new HashMap<>();
+            items.getOrThrow().forEach((id, item) ->
+                    item.itemModel().registerTranslations(space + "." + id, translations));
+            LangTranslator.registerTranslations(space, translations);
+            return DataResult.success(registry);
+        };
+    }
+
     public static final @NotNull NamespacedKey REGISTRY_KEY = Objects.requireNonNull(NamespacedKey.fromString("registry:type"));
+
     private final Map<String, T> idToItem = new HashMap<>();
     private final Map<String, ItemStack> idToItemStack = new HashMap<>();
     private final Map<T, String> itemToId = new IdentityHashMap<>();
@@ -148,6 +168,11 @@ public class ItemRegistry<T extends ItemModelHolder> implements Iterable<T> {
 
     public Map<T, String> itemToId() {
         return Collections.unmodifiableMap(itemToId);
+    }
+
+    @Deprecated
+    public static <T extends ItemModelHolder> YamlCodec<ItemRegistry<T>> codec(String space, YamlCodec<T> codec) {
+        return YamlCodec.of(decoder(space, codec.asDecoder()));
     }
 }
 
